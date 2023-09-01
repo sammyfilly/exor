@@ -72,7 +72,6 @@ class ProxyTest(BitcoinTestFramework):
             ])
 
     def node_test(self, node, proxies, auth):
-        rv = []
         # Test: outgoing IPv4 connection through node
         node.addnode("15.61.23.23:1234", "onetry")
         cmd = proxies[0].queue.get()
@@ -84,8 +83,7 @@ class ProxyTest(BitcoinTestFramework):
         if not auth:
             assert_equal(cmd.username, None)
             assert_equal(cmd.password, None)
-        rv.append(cmd)
-
+        rv = [cmd]
         # Test: outgoing IPv6 connection through node
         node.addnode("[1233:3432:2434:2343:3234:2345:6546:4534]:5443", "onetry")
         cmd = proxies[1].queue.get()
@@ -135,7 +133,7 @@ class ProxyTest(BitcoinTestFramework):
         # -proxy plus -onion, -proxyrandomize
         rv = self.node_test(self.nodes[2], [self.serv2, self.serv2, self.serv2, self.serv2], True)
         # Check that credentials as used for -proxyrandomize connections are unique
-        credentials = set((x.username,x.password) for x in rv)
+        credentials = {(x.username,x.password) for x in rv}
         assert_equal(len(credentials), 4)
 
         # proxy on IPv6 localhost

@@ -29,22 +29,22 @@ try:
           sequence = str(msgSequence)
 
         if topic == "hashblock":
-            print('- HASH BLOCK ('+sequence+') -')
+            print(f'- HASH BLOCK ({sequence}) -')
             print(binascii.hexlify(body).decode("utf-8"))
         elif topic == "hashtx":
-            print ('- HASH TX ('+sequence+') -')
+            print(f'- HASH TX ({sequence}) -')
             print(binascii.hexlify(body).decode("utf-8"))
         elif topic == "hashtxlock":
-            print('- HASH TX LOCK ('+sequence+') -')
+            print(f'- HASH TX LOCK ({sequence}) -')
             print(binascii.hexlify(body).decode("utf-8"))
         elif topic == "rawblock":
-            print('- RAW BLOCK HEADER ('+sequence+') -')
+            print(f'- RAW BLOCK HEADER ({sequence}) -')
             print(binascii.hexlify(body[:80]).decode("utf-8"))
         elif topic == "rawtx":
-            print('- RAW TX ('+sequence+') -')
+            print(f'- RAW TX ({sequence}) -')
             print(binascii.hexlify(body).decode("utf-8"))
         elif topic == "rawtxlock":
-            print('- RAW TX LOCK ('+sequence+') -')
+            print(f'- RAW TX LOCK ({sequence}) -')
             print(binascii.hexlify(body).decode("utf-8"))
 
 except KeyboardInterrupt:

@@ -15,13 +15,12 @@ class InvalidateTest(BitcoinTestFramework):
     
         
     def setup_chain(self):
-        print("Initializing test directory "+self.options.tmpdir)
+        print(f"Initializing test directory {self.options.tmpdir}")
         initialize_chain_clean(self.options.tmpdir, 3)
                  
     def setup_network(self):
-        self.nodes = []
-        self.is_network_split = False 
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug"]))
+        self.is_network_split = False
+        self.nodes = [start_node(0, self.options.tmpdir, ["-debug"])]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-debug"]))
         self.nodes.append(start_node(2, self.options.tmpdir, ["-debug"]))
         

@@ -63,15 +63,15 @@ def sync_mempools(rpc_connections):
 bitcoind_processes = {}
 
 def initialize_datadir(dirname, n):
-    datadir = os.path.join(dirname, "node"+str(n))
+    datadir = os.path.join(dirname, f"node{str(n)}")
     if not os.path.isdir(datadir):
         os.makedirs(datadir)
     with open(os.path.join(datadir, "exor.conf"), 'w') as f:
         f.write("regtest=1\n");
         f.write("rpcuser=rt\n");
         f.write("rpcpassword=rt\n");
-        f.write("port="+str(p2p_port(n))+"\n");
-        f.write("rpcport="+str(rpc_port(n))+"\n");
+        f.write(f"port={str(p2p_port(n))}" + "\n");
+        f.write(f"rpcport={str(rpc_port(n))}" + "\n");
     return datadir
 
 def initialize_chain(test_dir):
@@ -82,24 +82,35 @@ def initialize_chain(test_dir):
     """
 
     if not os.path.isdir(os.path.join("cache", "node0")):
-        devnull = open("/dev/null", "w+")
-        # Create cache directories, run exord:
-        for i in range(4):
-            datadir=initialize_datadir("cache", i)
-            args = [ os.getenv("BITCOIND", "exord"), "-keypool=1", "-datadir="+datadir, "-discover=0" ]
-            if i > 0:
-                args.append("-connect=127.0.0.1:"+str(p2p_port(0)))
-            bitcoind_processes[i] = subprocess.Popen(args)
-            subprocess.check_call([ os.getenv("BITCOINCLI", "exor-cli"), "-datadir="+datadir,
-                                    "-rpcwait", "getblockcount"], stdout=devnull)
-        devnull.close()
+        with open("/dev/null", "w+") as devnull:
+                    # Create cache directories, run exord:
+            for i in range(4):
+                datadir=initialize_datadir("cache", i)
+                args = [
+                    os.getenv("BITCOIND", "exord"),
+                    "-keypool=1",
+                    f"-datadir={datadir}",
+                    "-discover=0",
+                ]
+                if i > 0:
+                    args.append(f"-connect=127.0.0.1:{str(p2p_port(0))}")
+                bitcoind_processes[i] = subprocess.Popen(args)
+                subprocess.check_call(
+                    [
+                        os.getenv("BITCOINCLI", "exor-cli"),
+                        f"-datadir={datadir}",
+                        "-rpcwait",
+                        "getblockcount",
+                    ],
+                    stdout=devnull,
+                )
         rpcs = []
         for i in range(4):
             try:
                 url = "http://rt:rt@127.0.0.1:%d"%(rpc_port(i),)
                 rpcs.append(AuthServiceProxy(url))
             except:
-                sys.stderr.write("Error connecting to "+url+"\n")
+                sys.stderr.write(f"Error connecting to {url}" + "\n")
                 sys.exit(1)
 
         # Create a 200-block-long chain; each of the 4 nodes
@@ -107,9 +118,9 @@ def initialize_chain(test_dir):
         # blocks are created with timestamps 10 minutes apart, starting
         # at 1 Jan 2014
         block_time = 1388534400
-        for i in range(2):
+        for _ in range(2):
             for peer in range(4):
-                for j in range(25):
+                for _ in range(25):
                     set_node_times(rpcs, block_time)
                     rpcs[peer].setgenerate(True, 1)
                     block_time += 10*60
@@ -126,8 +137,8 @@ def initialize_chain(test_dir):
             os.remove(log_filename("cache", i, "fee_estimates.dat"))
 
     for i in range(4):
-        from_dir = os.path.join("cache", "node"+str(i))
-        to_dir = os.path.join(test_dir,  "node"+str(i))
+        from_dir = os.path.join("cache", f"node{str(i)}")
+        to_dir = os.path.join(test_dir, f"node{str(i)}")
         shutil.copytree(from_dir, to_dir)
         initialize_datadir(test_dir, i) # Overwrite port/rpcport in exor.conf
 
@@ -147,7 +158,7 @@ def _rpchost_to_args(rpchost):
 
     match = re.match('(\[[0-9a-fA-f:]+\]|[^:]+)(?::([0-9]+))?$', rpchost)
     if not match:
-        raise ValueError('Invalid RPC host spec ' + rpchost)
+        raise ValueError(f'Invalid RPC host spec {rpchost}')
 
     rpcconnect = match.group(1)
     rpcport = match.group(2)
@@ -155,24 +166,39 @@ def _rpchost_to_args(rpchost):
     if rpcconnect.startswith('['): # remove IPv6 [...] wrapping
         rpcconnect = rpcconnect[1:-1]
 
-    rv = ['-rpcconnect=' + rpcconnect]
+    rv = [f'-rpcconnect={rpcconnect}']
     if rpcport:
-        rv += ['-rpcport=' + rpcport]
+        rv += [f'-rpcport={rpcport}']
     return rv
 
 def start_node(i, dirname, extra_args=None, rpchost=None):
     """
     Start a exord and return RPC connection to it
     """
-    datadir = os.path.join(dirname, "node"+str(i))
-    args = [ os.getenv("BITCOIND", "exord"), "-datadir="+datadir, "-keypool=1", "-discover=0", "-rest" ]
+    datadir = os.path.join(dirname, f"node{str(i)}")
+    args = [
+        os.getenv("BITCOIND", "exord"),
+        f"-datadir={datadir}",
+        "-keypool=1",
+        "-discover=0",
+        "-rest",
+    ]
     if extra_args is not None: args.extend(extra_args)
     bitcoind_processes[i] = subprocess.Popen(args)
-    devnull = open("/dev/null", "w+")
-    subprocess.check_call([ os.getenv("BITCOINCLI", "exor-cli"), "-datadir="+datadir] +
-                          _rpchost_to_args(rpchost)  +
-                          ["-rpcwait", "getblockcount"], stdout=devnull)
-    devnull.close()
+    with open("/dev/null", "w+") as devnull:
+        subprocess.check_call(
+            (
+                (
+                    [
+                        os.getenv("BITCOINCLI", "exor-cli"),
+                        f"-datadir={datadir}",
+                    ]
+                    + _rpchost_to_args(rpchost)
+                )
+                + ["-rpcwait", "getblockcount"]
+            ),
+            stdout=devnull,
+        )
     url = "http://rt:rt@%s:%d" % (rpchost or '127.0.0.1', rpc_port(i))
     proxy = AuthServiceProxy(url)
     proxy.url = url # store URL on proxy for info
@@ -182,11 +208,12 @@ def start_nodes(num_nodes, dirname, extra_args=None, rpchost=None):
     """
     Start multiple exords, return RPC connections to them
     """
-    if extra_args is None: extra_args = [ None for i in range(num_nodes) ]
+    if extra_args is None:
+        extra_args = [None for _ in range(num_nodes)]
     return [ start_node(i, dirname, extra_args[i], rpchost) for i in range(num_nodes) ]
 
 def log_filename(dirname, n_node, logname):
-    return os.path.join(dirname, "node"+str(n_node), "regtest", logname)
+    return os.path.join(dirname, f"node{str(n_node)}", "regtest", logname)
 
 def stop_node(node, i):
     node.stop()
@@ -209,7 +236,7 @@ def wait_bitcoinds():
     bitcoind_processes.clear()
 
 def connect_nodes(from_connection, node_num):
-    ip_port = "127.0.0.1:"+str(p2p_port(node_num))
+    ip_port = f"127.0.0.1:{str(p2p_port(node_num))}"
     from_connection.addnode(ip_port, "onetry")
     # poll until version handshake complete to avoid race conditions
     # with transaction relaying
@@ -229,7 +256,7 @@ def find_output(node, txid, amount):
     for i in range(len(txdata["vout"])):
         if txdata["vout"][i]["value"] == amount:
             return i
-    raise RuntimeError("find_output txid %s : %s not found"%(txid,str(amount)))
+    raise RuntimeError(f"find_output txid {txid} : {str(amount)} not found")
 
 
 def gather_inputs(from_node, amount_needed, confirmations_required=1):
@@ -328,11 +355,11 @@ def random_transaction(nodes, amount, min_fee, fee_increment, fee_variants):
 
 def assert_equal(thing1, thing2):
     if thing1 != thing2:
-        raise AssertionError("%s != %s"%(str(thing1),str(thing2)))
+        raise AssertionError(f"{str(thing1)} != {str(thing2)}")
 
 def assert_greater_than(thing1, thing2):
     if thing1 <= thing2:
-        raise AssertionError("%s <= %s"%(str(thing1),str(thing2)))
+        raise AssertionError(f"{str(thing1)} <= {str(thing2)}")
 
 def assert_raises(exc, fun, *args, **kwds):
     try:
@@ -340,6 +367,6 @@ def assert_raises(exc, fun, *args, **kwds):
     except exc:
         pass
     except Exception as e:
-        raise AssertionError("Unexpected exception raised: "+type(e).__name__)
+        raise AssertionError(f"Unexpected exception raised: {type(e).__name__}")
     else:
         raise AssertionError("No exception raised")

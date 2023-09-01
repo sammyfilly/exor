@@ -54,13 +54,12 @@ def retrieve_pr_info(repo,pull):
     Return None if no title can be found, or an error happens.
     '''
     try:
-        req = Request("https://api.github.com/repos/"+repo+"/pulls/"+pull)
+        req = Request(f"https://api.github.com/repos/{repo}/pulls/{pull}")
         result = urlopen(req)
         reader = codecs.getreader('utf-8')
-        obj = json.load(reader(result))
-        return obj
+        return json.load(reader(result))
     except Exception as e:
-        print('Warning: unable to retrieve pull information from github: %s' % e)
+        print(f'Warning: unable to retrieve pull information from github: {e}')
         return None
 
 def ask_prompt(text):
@@ -72,11 +71,11 @@ def ask_prompt(text):
 
 def get_symlink_files():
     files = sorted(subprocess.check_output([GIT, 'ls-tree', '--full-tree', '-r', 'HEAD']).splitlines())
-    ret = []
-    for f in files:
-        if (int(f.decode('utf-8').split(" ")[0], 8) & 0o170000) == 0o120000:
-            ret.append(f.decode('utf-8').split("\t")[1])
-    return ret
+    return [
+        f.decode('utf-8').split("\t")[1]
+        for f in files
+        if (int(f.decode('utf-8').split(" ")[0], 8) & 0o170000) == 0o120000
+    ]
 
 def tree_sha512sum(commit='HEAD'):
     # request metadata for entire tree, recursively

@@ -17,10 +17,7 @@ def get_sub_array_from_array(object_array, to_match):
     '''
     num_matched = 0
     for item in object_array:
-        all_match = True
-        for key,value in to_match.items():
-            if item[key] != value:
-                all_match = False
+        all_match = all(item[key] == value for key, value in to_match.items())
         if not all_match:
             continue
         return item
@@ -37,20 +34,17 @@ def check_array_result(object_array, to_match, expected, should_not_find = False
         expected = { }
     num_matched = 0
     for item in object_array:
-        all_match = True
-        for key,value in to_match.items():
-            if item[key] != value:
-                all_match = False
+        all_match = all(item[key] == value for key, value in to_match.items())
         if not all_match:
             continue
-        for key,value in expected.items():
+        for key, value in expected.items():
             if item[key] != value:
-                raise AssertionError("%s : expected %s=%s"%(str(item), str(key), str(value)))
+                raise AssertionError(f"{str(item)} : expected {str(key)}={str(value)}")
             num_matched = num_matched+1
     if num_matched == 0 and should_not_find != True:
-        raise AssertionError("No objects matched %s"%(str(to_match)))
+        raise AssertionError(f"No objects matched {str(to_match)}")
     if num_matched > 0 and should_not_find == True:
-        raise AssertionError("Objects was matched %s"%(str(to_match)))
+        raise AssertionError(f"Objects was matched {str(to_match)}")
 
 class ReceivedByTest(BitcoinTestFramework):
 

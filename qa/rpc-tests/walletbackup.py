@@ -42,7 +42,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 class WalletBackupTest(BitcoinTestFramework):
 
     def setup_chain(self):
-        logging.info("Initializing test directory "+self.options.tmpdir)
+        logging.info(f"Initializing test directory {self.options.tmpdir}")
         initialize_chain_clean(self.options.tmpdir, 4)
 
     # This mirrors how the network was setup in the bash test
@@ -95,9 +95,9 @@ class WalletBackupTest(BitcoinTestFramework):
         stop_node(self.nodes[2], 2)
 
     def erase_three(self):
-        os.remove(self.options.tmpdir + "/node0/regtest/wallet.dat")
-        os.remove(self.options.tmpdir + "/node1/regtest/wallet.dat")
-        os.remove(self.options.tmpdir + "/node2/regtest/wallet.dat")
+        os.remove(f"{self.options.tmpdir}/node0/regtest/wallet.dat")
+        os.remove(f"{self.options.tmpdir}/node1/regtest/wallet.dat")
+        os.remove(f"{self.options.tmpdir}/node2/regtest/wallet.dat")
 
     def run_test(self):
         logging.info("Generating initial blockchain")
@@ -117,20 +117,20 @@ class WalletBackupTest(BitcoinTestFramework):
 
         logging.info("Creating transactions")
         # Five rounds of sending each other transactions.
-        for i in range(5):
+        for _ in range(5):
             self.do_one_round()
 
         logging.info("Backing up")
         tmpdir = self.options.tmpdir
-        self.nodes[0].backupwallet(tmpdir + "/node0/wallet.bak")
-        self.nodes[0].dumpwallet(tmpdir + "/node0/wallet.dump")
-        self.nodes[1].backupwallet(tmpdir + "/node1/wallet.bak")
-        self.nodes[1].dumpwallet(tmpdir + "/node1/wallet.dump")
-        self.nodes[2].backupwallet(tmpdir + "/node2/wallet.bak")
-        self.nodes[2].dumpwallet(tmpdir + "/node2/wallet.dump")
+        self.nodes[0].backupwallet(f"{tmpdir}/node0/wallet.bak")
+        self.nodes[0].dumpwallet(f"{tmpdir}/node0/wallet.dump")
+        self.nodes[1].backupwallet(f"{tmpdir}/node1/wallet.bak")
+        self.nodes[1].dumpwallet(f"{tmpdir}/node1/wallet.dump")
+        self.nodes[2].backupwallet(f"{tmpdir}/node2/wallet.bak")
+        self.nodes[2].dumpwallet(f"{tmpdir}/node2/wallet.dump")
 
         logging.info("More transactions")
-        for i in range(5):
+        for _ in range(5):
             self.do_one_round()
 
         # Generate 101 more blocks, so any fees paid mature
@@ -155,13 +155,19 @@ class WalletBackupTest(BitcoinTestFramework):
         self.erase_three()
 
         # Start node2 with no chain
-        shutil.rmtree(self.options.tmpdir + "/node2/regtest/blocks")
-        shutil.rmtree(self.options.tmpdir + "/node2/regtest/chainstate")
+        shutil.rmtree(f"{self.options.tmpdir}/node2/regtest/blocks")
+        shutil.rmtree(f"{self.options.tmpdir}/node2/regtest/chainstate")
 
         # Restore wallets from backup
-        shutil.copyfile(tmpdir + "/node0/wallet.bak", tmpdir + "/node0/regtest/wallet.dat")
-        shutil.copyfile(tmpdir + "/node1/wallet.bak", tmpdir + "/node1/regtest/wallet.dat")
-        shutil.copyfile(tmpdir + "/node2/wallet.bak", tmpdir + "/node2/regtest/wallet.dat")
+        shutil.copyfile(
+            f"{tmpdir}/node0/wallet.bak", f"{tmpdir}/node0/regtest/wallet.dat"
+        )
+        shutil.copyfile(
+            f"{tmpdir}/node1/wallet.bak", f"{tmpdir}/node1/regtest/wallet.dat"
+        )
+        shutil.copyfile(
+            f"{tmpdir}/node2/wallet.bak", f"{tmpdir}/node2/regtest/wallet.dat"
+        )
 
         logging.info("Re-starting nodes")
         self.start_three()
@@ -176,8 +182,8 @@ class WalletBackupTest(BitcoinTestFramework):
         self.erase_three()
 
         #start node2 with no chain
-        shutil.rmtree(self.options.tmpdir + "/node2/regtest/blocks")
-        shutil.rmtree(self.options.tmpdir + "/node2/regtest/chainstate")
+        shutil.rmtree(f"{self.options.tmpdir}/node2/regtest/blocks")
+        shutil.rmtree(f"{self.options.tmpdir}/node2/regtest/chainstate")
 
         self.start_three()
 
@@ -185,9 +191,9 @@ class WalletBackupTest(BitcoinTestFramework):
         assert_equal(self.nodes[1].getbalance(), 0)
         assert_equal(self.nodes[2].getbalance(), 0)
 
-        self.nodes[0].importwallet(tmpdir + "/node0/wallet.dump")
-        self.nodes[1].importwallet(tmpdir + "/node1/wallet.dump")
-        self.nodes[2].importwallet(tmpdir + "/node2/wallet.dump")
+        self.nodes[0].importwallet(f"{tmpdir}/node0/wallet.dump")
+        self.nodes[1].importwallet(f"{tmpdir}/node1/wallet.dump")
+        self.nodes[2].importwallet(f"{tmpdir}/node2/wallet.dump")
 
         sync_blocks(self.nodes)
 

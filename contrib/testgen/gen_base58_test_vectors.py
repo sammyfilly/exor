@@ -65,16 +65,12 @@ def gen_valid_vectors():
 
 def gen_invalid_vector(template, corrupt_prefix, randomize_payload_size, corrupt_suffix):
     '''Generate possibly invalid vector'''
-    if corrupt_prefix:
-        prefix = os.urandom(1)
-    else:
-        prefix = str(bytearray(template[0]))
-    
+    prefix = os.urandom(1) if corrupt_prefix else str(bytearray(template[0]))
     if randomize_payload_size:
         payload = os.urandom(max(int(random.expovariate(0.5)), 50))
     else:
         payload = os.urandom(template[1])
-    
+
     if corrupt_suffix:
         suffix = os.urandom(len(template[2]))
     else:
@@ -104,7 +100,7 @@ def gen_invalid_vectors():
                     val += random.choice(b58chars)
                 else: # replace random character in the middle
                     n = random.randint(0, len(val))
-                    val = val[0:n] + random.choice(b58chars) + val[n+1:]
+                    val = val[:n] + random.choice(b58chars) + val[n+1:]
             if not is_valid(val):
                 yield val,
 

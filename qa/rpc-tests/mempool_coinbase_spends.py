@@ -21,8 +21,7 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
 
     def setup_network(self):
         args = ["-checkmempool", "-debug=mempool"]
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, args))
+        self.nodes = [start_node(0, self.options.tmpdir, args)]
         self.nodes.append(start_node(1, self.options.tmpdir, args))
         connect_nodes(self.nodes[1], 0)
         self.is_network_split = False
@@ -78,7 +77,9 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
 
         self.sync_all()
 
-        assert_equal(set(self.nodes[0].getrawmempool()), set([ spend_101_id, spend_102_1_id ]))
+        assert_equal(
+            set(self.nodes[0].getrawmempool()), {spend_101_id, spend_102_1_id}
+        )
 
         # Use invalidateblock to re-org back and make all those coinbase spends
         # immature/invalid:

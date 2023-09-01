@@ -41,17 +41,15 @@ def parseline(line):
             m = PATTERN_ONION.match(sline[0])
             if m is None:
                 return None
-            else:
-                net = 'onion'
-                ipstr = sortkey = m.group(1)
-                port = int(m.group(2))
+            net = 'onion'
+            ipstr = sortkey = m.group(1)
         else:
             net = 'ipv6'
             if m.group(1) in ['::']: # Not interested in localhost
                 return None
             ipstr = m.group(1)
             sortkey = ipstr # XXX parse IPv6 into number, could use name_to_ipv6 from generate-seeds
-            port = int(m.group(2))
+        port = int(m.group(2))
     else:
         # Do IPv4 sanity check
         ip = 0
@@ -75,10 +73,7 @@ def parseline(line):
     # Extract protocol version.
     version = int(sline[10])
     # Extract user agent.
-    if len(sline) > 11:
-        agent = sline[11][1:] + sline[12][:-1]
-    else:
-        agent = sline[11][1:-1]
+    agent = sline[11][1:] + sline[12][:-1] if len(sline) > 11 else sline[11][1:-1]
     # Extract service flags.
     service = int(sline[9], 16)
     # Extract blocks.
