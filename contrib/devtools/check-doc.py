@@ -9,18 +9,36 @@ Return value is 0 to indicate no error.
 Author: @MarcoFalke
 '''
 
+
 from subprocess import check_output
 import re
 
 FOLDER_GREP = 'src'
 FOLDER_TEST = 'src/test/'
-CMD_ROOT_DIR = '`git rev-parse --show-toplevel`/%s' % FOLDER_GREP
+CMD_ROOT_DIR = f'`git rev-parse --show-toplevel`/{FOLDER_GREP}'
 CMD_GREP_ARGS = r"egrep -r -I '(map(Multi)?Args(\.count\(|\[)|Get(Bool)?Arg\()\"\-[^\"]+?\"' %s | grep -v '%s'" % (CMD_ROOT_DIR, FOLDER_TEST)
 CMD_GREP_DOCS = r"egrep -r -I 'HelpMessageOpt\(\"\-[^\"=]+?(=|\")' %s" % (CMD_ROOT_DIR)
 REGEX_ARG = re.compile(r'(?:map(?:Multi)?Args(?:\.count\(|\[)|Get(?:Bool)?Arg\()\"(\-[^\"]+?)\"')
 REGEX_DOC = re.compile(r'HelpMessageOpt\(\"(\-[^\"=]+?)(?:=|\")')
 # list unsupported, deprecated and duplicate args as they need no documentation
-SET_DOC_OPTIONAL = set(['-rpcssl', '-benchmark', '-h', '-help', '-socks', '-tor', '-debugnet', '-whitelistalwaysrelay', '-prematurewitness', '-walletprematurewitness', '-promiscuousmempoolflags', '-blockminsize', '-sendfreetransactions', '-checklevel', '-liquidityprovider', '-anonymizeexoramount'])
+SET_DOC_OPTIONAL = {
+    '-rpcssl',
+    '-benchmark',
+    '-h',
+    '-help',
+    '-socks',
+    '-tor',
+    '-debugnet',
+    '-whitelistalwaysrelay',
+    '-prematurewitness',
+    '-walletprematurewitness',
+    '-promiscuousmempoolflags',
+    '-blockminsize',
+    '-sendfreetransactions',
+    '-checklevel',
+    '-liquidityprovider',
+    '-anonymizeexoramount',
+}
 
 def main():
   used = check_output(CMD_GREP_ARGS, shell=True)

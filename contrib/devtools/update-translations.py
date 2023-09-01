@@ -91,24 +91,31 @@ def check_format_specifiers(source, translation, errors, numerus):
     try:
         translation_f = split_format_specifiers(find_format_specifiers(translation))
     except IndexError:
-        errors.append("Parse error in translation for '%s': '%s'" % (sanitize_string(source), sanitize_string(translation)))
+        errors.append(
+            f"Parse error in translation for '{sanitize_string(source)}': '{sanitize_string(translation)}'"
+        )
         return False
     else:
         if source_f != translation_f:
             if numerus and source_f == (set(), ['n']) and translation_f == (set(), []) and translation.find('%') == -1:
                 # Allow numerus translations to omit %n specifier (usually when it only has one possible value)
                 return True
-            errors.append("Mismatch between '%s' and '%s'" % (sanitize_string(source), sanitize_string(translation)))
+            errors.append(
+                f"Mismatch between '{sanitize_string(source)}' and '{sanitize_string(translation)}'"
+            )
             return False
     return True
 
 def all_ts_files(suffix=''):
     for filename in os.listdir(LOCALE_DIR):
         # process only language files, and do not process source language
-        if not filename.endswith('.ts'+suffix) or filename == SOURCE_LANG+suffix:
+        if (
+            not filename.endswith(f'.ts{suffix}')
+            or filename == SOURCE_LANG + suffix
+        ):
             continue
         if suffix: # remove provided suffix
-            filename = filename[0:-len(suffix)]
+            filename = filename[:-len(suffix)]
         filepath = os.path.join(LOCALE_DIR, filename)
         yield(filename, filepath)
 
@@ -135,13 +142,13 @@ def postprocess_translations(reduce_diff_hacks=False):
         ET._escape_cdata = escape_cdata
 
     for (filename,filepath) in all_ts_files():
-        os.rename(filepath, filepath+'.orig')
+        os.rename(filepath, f'{filepath}.orig')
 
     have_errors = False
     for (filename,filepath) in all_ts_files('.orig'):
         # pre-fixups to cope with transifex output
         parser = ET.XMLParser(encoding='utf-8') # need to override encoding because 'utf8' is not understood only 'utf-8'
-        with open(filepath + '.orig', 'rb') as f:
+        with open(f'{filepath}.orig', 'rb') as f:
             data = f.read()
         # remove control characters; this must be done over the entire file otherwise the XML parser will fail
         data = remove_invalid_characters(data)
@@ -167,7 +174,7 @@ def postprocess_translations(reduce_diff_hacks=False):
                     valid = check_format_specifiers(source, translation, errors, numerus)
 
                     for error in errors:
-                        print('%s: %s' % (filename, error))
+                        print(f'{filename}: {error}')
 
                     if not valid: # set type to unfinished and clear string if invalid
                         translation_node.clear()
@@ -185,7 +192,7 @@ def postprocess_translations(reduce_diff_hacks=False):
         # check if document is (virtually) empty, and remove it if so
         num_messages = 0
         for context in root.findall('context'):
-            for message in context.findall('message'):
+            for _ in context.findall('message'):
                 num_messages += 1
         if num_messages < MIN_NUM_MESSAGES:
             print('Removing %s, as it contains only %i messages' % (filepath, num_messages))

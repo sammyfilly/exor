@@ -30,7 +30,7 @@ class BitcoinTestFramework(object):
         pass
 
     def setup_chain(self):
-        print("Initializing test directory "+self.options.tmpdir)
+        print(f"Initializing test directory {self.options.tmpdir}")
         initialize_chain(self.options.tmpdir)
 
     def setup_nodes(self):
@@ -102,7 +102,7 @@ class BitcoinTestFramework(object):
             import logging
             logging.basicConfig(level=logging.DEBUG)
 
-        os.environ['PATH'] = self.options.srcdir+":"+os.environ['PATH']
+        os.environ['PATH'] = f"{self.options.srcdir}:" + os.environ['PATH']
 
         check_json_precision()
 
@@ -122,10 +122,10 @@ class BitcoinTestFramework(object):
             print("JSONRPC error: "+e.error['message'])
             traceback.print_tb(sys.exc_info()[2])
         except AssertionError as e:
-            print("Assertion failed: "+e.message)
+            print(f"Assertion failed: {e.message}")
             traceback.print_tb(sys.exc_info()[2])
         except Exception as e:
-            print("Unexpected exception caught during testing: "+str(e))
+            print(f"Unexpected exception caught during testing: {str(e)}")
             traceback.print_tb(sys.exc_info()[2])
 
         if not self.options.nocleanup:

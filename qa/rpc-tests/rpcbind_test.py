@@ -29,8 +29,8 @@ def run_bind_test(tmpdir, allow_ips, connect_to, addresses, expected):
     expected = [(addr_to_hex(addr), port) for (addr, port) in expected]
     base_args = ['-disablewallet', '-nolisten']
     if allow_ips:
-        base_args += ['-rpcallowip=' + x for x in allow_ips]
-    binds = ['-rpcbind='+addr for addr in addresses]
+        base_args += [f'-rpcallowip={x}' for x in allow_ips]
+    binds = [f'-rpcbind={addr}' for addr in addresses]
     nodes = start_nodes(1, tmpdir, [base_args + binds], connect_to)
     try:
         pid = bitcoind_processes[0].pid
@@ -44,7 +44,9 @@ def run_allowip_test(tmpdir, allow_ips, rpchost, rpcport):
     Start a node with rpcwallow IP, and request getinfo
     at a non-localhost IP.
     '''
-    base_args = ['-disablewallet', '-nolisten'] + ['-rpcallowip='+x for x in allow_ips]
+    base_args = ['-disablewallet', '-nolisten'] + [
+        f'-rpcallowip={x}' for x in allow_ips
+    ]
     nodes = start_nodes(1, tmpdir, [base_args])
     try:
         # connect to node through non-loopback interface
@@ -59,15 +61,12 @@ def run_allowip_test(tmpdir, allow_ips, rpchost, rpcport):
 
 def run_test(tmpdir):
     assert(sys.platform == 'linux2') # due to OS-specific network stats queries, this test works only on Linux
-    # find the first non-loopback interface for testing
-    non_loopback_ip = None
-    for name,ip in all_interfaces():
-        if ip != '127.0.0.1':
-            non_loopback_ip = ip
-            break
+    non_loopback_ip = next(
+        (ip for name, ip in all_interfaces() if ip != '127.0.0.1'), None
+    )
     if non_loopback_ip is None:
         assert(not 'This test requires at least one non-loopback IPv4 interface')
-    print("Using interface %s for testing" % non_loopback_ip)
+    print(f"Using interface {non_loopback_ip} for testing")
 
     defaultport = rpc_port(0)
 
@@ -116,14 +115,14 @@ def main():
                       help="Root directory for datadirs")
     (options, args) = parser.parse_args()
 
-    os.environ['PATH'] = options.srcdir+":"+os.environ['PATH']
+    os.environ['PATH'] = f"{options.srcdir}:" + os.environ['PATH']
 
     check_json_precision()
 
     success = False
     nodes = []
     try:
-        print("Initializing test directory "+options.tmpdir)
+        print(f"Initializing test directory {options.tmpdir}")
         if not os.path.isdir(options.tmpdir):
             os.makedirs(options.tmpdir)
         initialize_chain(options.tmpdir)
@@ -133,9 +132,9 @@ def main():
         success = True
 
     except AssertionError as e:
-        print("Assertion failed: "+e.message)
+        print(f"Assertion failed: {e.message}")
     except Exception as e:
-        print("Unexpected exception caught during testing: "+str(e))
+        print(f"Unexpected exception caught during testing: {str(e)}")
         traceback.print_tb(sys.exc_info()[2])
 
     if not options.nocleanup:

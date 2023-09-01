@@ -9,21 +9,18 @@ from subprocess import check_output
 def countRelevantCommas(line):
     openParensPosStack = []
     openParensPos = 0
-    charCounter = 0
     numRelevantCommas = 0
     firstOpenParensIndex = line.find("(")
 
-    for char in line:
+    for charCounter, char in enumerate(line):
         if char == '(':
             openParensPosStack.append(charCounter)
 
-        if char == ')':
+        elif char == ')':
             openParensPosStack.pop()
 
         if char == "," and openParensPosStack[-1] == firstOpenParensIndex:
             numRelevantCommas += 1
-        charCounter += 1
-
     return numRelevantCommas
 
 if __name__ == "__main__":

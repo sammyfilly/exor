@@ -37,9 +37,7 @@ def bufreverse(in_buf):
 	return ''.join(out_words)
 
 def wordreverse(in_buf):
-	out_words = []
-	for i in range(0, len(in_buf), 4):
-		out_words.append(in_buf[i:i+4])
+	out_words = [in_buf[i:i+4] for i in range(0, len(in_buf), 4)]
 	out_words.reverse()
 	return ''.join(out_words)
 
@@ -50,16 +48,13 @@ def calc_hdr_hash(blk_hdr):
 
 	hash2 = hashlib.sha256()
 	hash2.update(hash1_o)
-	hash2_o = hash2.digest()
-
-	return hash2_o
+	return hash2.digest()
 
 def calc_hash_str(blk_hdr):
 	hash = calc_hdr_hash(blk_hdr)
 	hash = bufreverse(hash)
 	hash = wordreverse(hash)
-	hash_str = hash.encode('hex')
-	return hash_str
+	return hash.encode('hex')
 
 def get_blk_dt(blk_hdr):
 	members = struct.unpack("<I", blk_hdr[68:68+4])
@@ -75,15 +70,12 @@ def get_block_hashes(settings):
 		line = line.rstrip()
 		blkindex.append(line)
 
-	print("Read " + str(len(blkindex)) + " hashes")
+	print(f"Read {len(blkindex)} hashes")
 
 	return blkindex
 
 def mkblockmap(blkindex):
-	blkmap = {}
-	for height,hash in enumerate(blkindex):
-		blkmap[hash] = height
-	return blkmap
+	return {hash: height for height, hash in enumerate(blkindex)}
 
 # Block header and extent on disk
 BlockExtent = namedtuple('BlockExtent', ['fn', 'offset', 'inhdr', 'blkhdr', 'size'])
@@ -148,7 +140,7 @@ class BlockDataCopier:
 				outFname = self.settings['output_file']
 			else:
 				outFname = "%s/blk%05d.dat" % (self.settings['output'], outFn)
-			print("Output file" + outFname)
+			print(f"Output file{outFname}")
 			self.outF = open(outFname, "wb")
 
 		self.outF.write(inhdr)
@@ -189,7 +181,7 @@ class BlockDataCopier:
 		while self.blkCountOut < len(self.blkindex):
 			if not self.inF:
 				fname = self.inFileName(self.inFn)
-				print("Input file" + fname)
+				print(f"Input file{fname}")
 				try:
 					self.inF = open(fname, "rb")
 				except IOError:
@@ -205,7 +197,7 @@ class BlockDataCopier:
 
 			inMagic = inhdr[:4]
 			if (inMagic != self.settings['netmagic']):
-				print("Invalid magic:" + inMagic)
+				print(f"Invalid magic:{inMagic}")
 				return
 			inLenLE = inhdr[4:]
 			su = struct.unpack("<I", inLenLE)
@@ -214,8 +206,8 @@ class BlockDataCopier:
 			inExtent = BlockExtent(self.inFn, self.inF.tell(), inhdr, blk_hdr, inLen)
 
 			hash_str = calc_hash_str(blk_hdr)
-			if not hash_str in blkmap:
-				print("Skipping unknown block " + hash_str)
+			if hash_str not in blkmap:
+				print(f"Skipping unknown block {hash_str}")
 				self.inF.seek(inLen, os.SEEK_CUR)
 				continue
 

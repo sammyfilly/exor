@@ -16,8 +16,7 @@ import shutil
 class BIP66Test(BitcoinTestFramework):
 
     def setup_network(self):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, []))
+        self.nodes = [start_node(0, self.options.tmpdir, [])]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-blockversion=2"]))
         self.nodes.append(start_node(2, self.options.tmpdir, ["-blockversion=3"]))
         connect_nodes(self.nodes[1], 0)
@@ -35,7 +34,7 @@ class BIP66Test(BitcoinTestFramework):
             raise AssertionError("Failed to mine 100 version=2 blocks")
 
         # Mine 750 new-version blocks
-        for i in xrange(15):
+        for _ in xrange(15):
             self.nodes[2].setgenerate(True, 50)
         self.sync_all()
         if (self.nodes[0].getblockcount() != cnt + 850):
@@ -52,7 +51,7 @@ class BIP66Test(BitcoinTestFramework):
         # TODO: check that new DERSIG rules are enforced
 
         # Mine 198 new-version blocks
-        for i in xrange(2):
+        for _ in xrange(2):
             self.nodes[2].setgenerate(True, 99)
         self.sync_all()
         if (self.nodes[0].getblockcount() != cnt + 1049):

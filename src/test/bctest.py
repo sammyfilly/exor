@@ -15,7 +15,7 @@ def bctest(testDir, testObj, exeext):
 	stdinCfg = None
 	inputData = None
 	if "input" in testObj:
-		filename = testDir + "/" + testObj['input']
+		filename = f"{testDir}/" + testObj['input']
 		inputData = open(filename).read()
 		stdinCfg = subprocess.PIPE
 
@@ -23,27 +23,25 @@ def bctest(testDir, testObj, exeext):
 	outputData = None
 	if "output_cmp" in testObj:
 		outputFn = testObj['output_cmp']
-		outputData = open(testDir + "/" + outputFn).read()
+		outputData = open(f"{testDir}/{outputFn}").read()
 	proc = subprocess.Popen(execrun, stdin=stdinCfg, stdout=subprocess.PIPE, stderr=subprocess.PIPE,universal_newlines=True)
 	try:
 		outs = proc.communicate(input=inputData)
 	except OSError:
-		print("OSError, Failed to execute " + execprog)
+		print(f"OSError, Failed to execute {execprog}")
 		sys.exit(1)
 
 	if outputData and (outs[0] != outputData):
-		print("Output data mismatch for " + outputFn)
+		print(f"Output data mismatch for {outputFn}")
 		sys.exit(1)
 
-	wantRC = 0
-	if "return_code" in testObj:
-		wantRC = testObj['return_code']
+	wantRC = testObj['return_code'] if "return_code" in testObj else 0
 	if proc.returncode != wantRC:
-		print("Return code mismatch for " + outputFn)
+		print(f"Return code mismatch for {outputFn}")
 		sys.exit(1)
 
 def bctester(testDir, input_basename, buildenv):
-	input_filename = testDir + "/" + input_basename
+	input_filename = f"{testDir}/{input_basename}"
 	raw_data = open(input_filename).read()
 	input_data = json.loads(raw_data)
 

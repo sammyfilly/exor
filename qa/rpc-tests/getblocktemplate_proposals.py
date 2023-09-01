@@ -20,18 +20,15 @@ def check_array_result(object_array, to_match, expected):
     """
     num_matched = 0
     for item in object_array:
-        all_match = True
-        for key,value in to_match.items():
-            if item[key] != value:
-                all_match = False
+        all_match = all(item[key] == value for key, value in to_match.items())
         if not all_match:
             continue
-        for key,value in expected.items():
+        for key, value in expected.items():
             if item[key] != value:
-                raise AssertionError("%s : expected %s=%s"%(str(item), str(key), str(value)))
+                raise AssertionError(f"{str(item)} : expected {str(key)}={str(value)}")
             num_matched = num_matched+1
     if num_matched == 0:
-        raise AssertionError("No objects matched %s"%(str(to_match)))
+        raise AssertionError(f"No objects matched {str(to_match)}")
 
 def b2x(b):
     return b2a_hex(b).decode('ascii')
@@ -51,9 +48,7 @@ def varlenEncode(n):
         return pack('<B', n)
     if n <= 0xffff:
         return b'\xfd' + pack('<H', n)
-    if n <= 0xffffffff:
-        return b'\xfe' + pack('<L', n)
-    return b'\xff' + pack('<Q', n)
+    return b'\xfe' + pack('<L', n) if n <= 0xffffffff else b'\xff' + pack('<Q', n)
 
 def dblsha(b):
     return sha256(sha256(b).digest()).digest()
@@ -61,17 +56,15 @@ def dblsha(b):
 def genmrklroot(leaflist):
     cur = leaflist
     while len(cur) > 1:
-        n = []
         if len(cur) & 1:
             cur.append(cur[-1])
-        for i in range(0, len(cur), 2):
-            n.append(dblsha(cur[i] + cur[i+1]))
+        n = [dblsha(cur[i] + cur[i+1]) for i in range(0, len(cur), 2)]
         cur = n
     return cur[0]
 
 def template_to_bytes(tmpl, txlist):
     blkver = pack('<L', tmpl['version'])
-    mrklroot = genmrklroot(list(dblsha(a) for a in txlist))
+    mrklroot = genmrklroot([dblsha(a) for a in txlist])
     timestamp = pack('<L', tmpl['curtime'])
     nonce = b'\0\0\0\0'
     blk = blkver + a2b_hex(tmpl['previousblockhash'])[::-1] + mrklroot + timestamp + a2b_hex(tmpl['bits'])[::-1] + nonce
@@ -86,7 +79,7 @@ def template_to_hex(tmpl, txlist):
 def assert_template(node, tmpl, txlist, expect):
     rsp = node.getblocktemplate({'data':template_to_hex(tmpl, txlist),'mode':'proposal'})
     if rsp != expect:
-        raise AssertionError('unexpected: %s' % (rsp,))
+        raise AssertionError(f'unexpected: {rsp}')
 
 class GetBlockTemplateProposalTest(BitcoinTestFramework):
     '''
@@ -102,7 +95,10 @@ class GetBlockTemplateProposalTest(BitcoinTestFramework):
             hexcoinbase = b2x(rawcoinbase)
             hexoutval = b2x(pack('<Q', tmpl['coinbasevalue']))
             tmpl['coinbasetxn'] = {'data': '01000000' + '01' + '0000000000000000000000000000000000000000000000000000000000000000ffffffff' + ('%02x' % (len(rawcoinbase),)) + hexcoinbase + 'fffffffe' + '01' + hexoutval + '00' + '00000000'}
-        txlist = list(bytearray(a2b_hex(a['data'])) for a in (tmpl['coinbasetxn'],) + tuple(tmpl['transactions']))
+        txlist = [
+            bytearray(a2b_hex(a['data']))
+            for a in (tmpl['coinbasetxn'],) + tuple(tmpl['transactions'])
+        ]
 
         # Test 0: Capability advertised
         assert('proposal' in tmpl['capabilities'])
@@ -161,7 +157,7 @@ class GetBlockTemplateProposalTest(BitcoinTestFramework):
         rawtmpl[4+32] = (rawtmpl[4+32] + 1) % 0x100
         rsp = node.getblocktemplate({'data':b2x(rawtmpl),'mode':'proposal'})
         if rsp != 'bad-txnmrklroot':
-            raise AssertionError('unexpected: %s' % (rsp,))
+            raise AssertionError(f'unexpected: {rsp}')
 
         # Test 10: Bad timestamps
         realtime = tmpl['curtime']

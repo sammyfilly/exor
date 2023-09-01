@@ -98,7 +98,7 @@ def read_symbols(executable, imports=True):
     p = subprocess.Popen([READELF_CMD, '--dyn-syms', '-W', executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
     if p.returncode:
-        raise IOError('Could not read symbols for %s: %s' % (executable, stderr.strip()))
+        raise IOError(f'Could not read symbols for {executable}: {stderr.strip()}')
     syms = []
     for line in stdout.split(b'\n'):
         line = line.split()
@@ -117,10 +117,8 @@ def check_version(max_versions, version):
     else:
         lib = version
         ver = '0'
-    ver = tuple([int(x) for x in ver.split(b'.')])
-    if not lib in max_versions:
-        return False
-    return ver <= max_versions[lib]
+    ver = tuple(int(x) for x in ver.split(b'.'))
+    return False if lib not in max_versions else ver <= max_versions[lib]
 
 def read_libraries(filename):
     p = subprocess.Popen([READELF_CMD, '-d', '-W', filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -131,8 +129,9 @@ def read_libraries(filename):
     for line in stdout.split(b'\n'):
         tokens = line.split()
         if len(tokens)>2 and tokens[1] == b'(NEEDED)':
-            match = re.match(b'^Shared library: \[(.*)\]$', b' '.join(tokens[2:]))
-            if match:
+            if match := re.match(
+                b'^Shared library: \[(.*)\]$', b' '.join(tokens[2:])
+            ):
                 libraries.append(match.group(1))
             else:
                 raise ValueError('Unparseable (NEEDED) specification')
@@ -145,18 +144,24 @@ if __name__ == '__main__':
         # Check imported symbols
         for sym,version in read_symbols(filename, True):
             if version and not check_version(MAX_VERSIONS, version):
-                print('%s: symbol %s from unsupported version %s' % (filename, cppfilt(sym).decode('utf-8'), version.decode('utf-8')))
+                print(
+                    f"{filename}: symbol {cppfilt(sym).decode('utf-8')} from unsupported version {version.decode('utf-8')}"
+                )
                 retval = 1
         # Check exported symbols
         for sym,version in read_symbols(filename, False):
             if sym in IGNORE_EXPORTS:
                 continue
-            print('%s: export of symbol %s not allowed' % (filename, cppfilt(sym).decode('utf-8')))
+            print(
+                f"{filename}: export of symbol {cppfilt(sym).decode('utf-8')} not allowed"
+            )
             retval = 1
         # Check dependency libraries
         for library_name in read_libraries(filename):
             if library_name not in ALLOWED_LIBRARIES:
-                print('%s: NEEDED library %s is not allowed' % (filename, library_name.decode('utf-8')))
+                print(
+                    f"{filename}: NEEDED library {library_name.decode('utf-8')} is not allowed"
+                )
                 retval = 1
 
     exit(retval)

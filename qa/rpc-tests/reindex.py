@@ -14,13 +14,12 @@ import os.path
 class ReindexTest(BitcoinTestFramework):
 
     def setup_chain(self):
-        print("Initializing test directory "+self.options.tmpdir)
+        print(f"Initializing test directory {self.options.tmpdir}")
         initialize_chain_clean(self.options.tmpdir, 1)
 
     def setup_network(self):
-        self.nodes = []
         self.is_network_split = False
-        self.nodes.append(start_node(0, self.options.tmpdir))
+        self.nodes = [start_node(0, self.options.tmpdir)]
 
     def run_test(self):
         self.nodes[0].generate(3)

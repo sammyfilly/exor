@@ -57,7 +57,7 @@ def netstat(typ='tcp'):
     To get pid of all network process running on system, you must run this script
     as superuser
     '''
-    with open('/proc/net/'+typ,'r') as f:
+    with open(f'/proc/net/{typ}', 'r') as f:
         content = f.readlines()
         content.pop(0)
     result = []
@@ -77,11 +77,11 @@ def get_bind_addrs(pid):
     Get bind addresses as (host,port) tuples for process pid.
     '''
     inodes = get_socket_inodes(pid)
-    bind_addrs = []
-    for conn in netstat('tcp') + netstat('tcp6'):
-        if conn[3] == STATE_LISTEN and conn[4] in inodes:
-            bind_addrs.append(conn[1])
-    return bind_addrs
+    return [
+        conn[1]
+        for conn in netstat('tcp') + netstat('tcp6')
+        if conn[3] == STATE_LISTEN and conn[4] in inodes
+    ]
 
 # from: http://code.activestate.com/recipes/439093/
 def all_interfaces():
@@ -123,7 +123,7 @@ def addr_to_hex(addr):
         addr = addr.split(':')
         for i,comp in enumerate(addr):
             if comp == '':
-                if i == 0 or i == (len(addr)-1): # skip empty component at beginning or end
+                if i in [0, len(addr) - 1]: # skip empty component at beginning or end
                     continue
                 x += 1 # :: skips to suffix
                 assert(x < 2)
@@ -135,5 +135,5 @@ def addr_to_hex(addr):
         assert((x == 0 and nullbytes == 0) or (x == 1 and nullbytes > 0))
         addr = sub[0] + ([0] * nullbytes) + sub[1]
     else:
-        raise ValueError('Could not parse address %s' % addr)
+        raise ValueError(f'Could not parse address {addr}')
     return binascii.hexlify(bytearray(addr))

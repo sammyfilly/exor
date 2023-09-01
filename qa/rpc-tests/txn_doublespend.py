@@ -30,7 +30,7 @@ class TxnMallTest(BitcoinTestFramework):
         for i in range(4):
             assert_equal(self.nodes[i].getbalance(), starting_balance)
             self.nodes[i].getnewaddress("")  # bug workaround, coins generated assigned to first getnewaddress!
-        
+
         # Assign coins to foo and bar accounts:
         self.nodes[0].move("", "foo", 1220)
         self.nodes[0].move("", "bar", 30)
@@ -43,9 +43,7 @@ class TxnMallTest(BitcoinTestFramework):
         # but don't broadcast:
         (total_in, inputs) = gather_inputs(self.nodes[0], 1210)
         change_address = self.nodes[0].getnewaddress("foo")
-        outputs = {}
-        outputs[change_address] = 40
-        outputs[node1_address] = 1210
+        outputs = {change_address: 40, node1_address: 1210}
         rawtx = self.nodes[0].createrawtransaction(inputs, outputs)
         doublespend = self.nodes[0].signrawtransaction(rawtx)
         assert_equal(doublespend["complete"], True)
@@ -55,11 +53,11 @@ class TxnMallTest(BitcoinTestFramework):
         # spends all mature inputs:
         txid1 = self.nodes[0].sendfrom("foo", node1_address, 1210, 0)
         txid2 = self.nodes[0].sendfrom("bar", node1_address, 20, 0)
-        
+
         # Have node0 mine a block:
-        if (self.options.mine_block):
+        if self.options.mine_block:
             self.nodes[0].setgenerate(True, 1)
-            sync_blocks(self.nodes[0:2])
+            sync_blocks(self.nodes[:2])
 
         tx1 = self.nodes[0].gettransaction(txid1)
         tx2 = self.nodes[0].gettransaction(txid2)
@@ -84,7 +82,7 @@ class TxnMallTest(BitcoinTestFramework):
         else:
             assert_equal(tx1["confirmations"], 0)
             assert_equal(tx2["confirmations"], 0)
-        
+
         # Now give doublespend to miner:
         mutated_txid = self.nodes[2].sendrawtransaction(doublespend["hex"])
         # ... mine a block...
@@ -98,7 +96,7 @@ class TxnMallTest(BitcoinTestFramework):
         # Re-fetch transaction info:
         tx1 = self.nodes[0].gettransaction(txid1)
         tx2 = self.nodes[0].gettransaction(txid2)
-        
+
         # Both transactions should be conflicted
         assert_equal(tx1["confirmations"], -1)
         assert_equal(tx2["confirmations"], -1)
